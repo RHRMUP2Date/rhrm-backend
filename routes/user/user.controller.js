@@ -7,53 +7,154 @@ const saltRounds = 10;
 const jwt = require("jsonwebtoken");
 const secret = process.env.JWT_SECRET;
 
+// const login = async (req, res) => {
+//   try {
+//     const allUser = await prisma.user.findMany();
+//     const user = allUser.find(
+//       (u) =>
+//         u.userName === req.body.userName &&
+//         bcrypt.compareSync(req.body.password, u.password)
+//     );
+//     // get permission from user roles
+//     const permissions = await prisma.role.findUnique({
+//       where: {
+//         id: user.roleId,
+//       },
+//       include: {
+//         rolePermission: {
+//           include: {
+//             permission: true,
+//           },
+//         },
+//       },
+//     });
+//     // store all permissions name to an array
+//     const permissionNames = permissions.rolePermission.map(
+//       (rp) => rp.permission.name
+//     );
+
+//     if (user) {
+//       const token = jwt.sign(
+//         { sub: user.id, permissions: permissionNames },
+//         secret,
+//         {
+//           expiresIn: "24h",
+//         }
+//       );
+//       const { password, ...userWithoutPassword } = user;
+//       return res.status(200).json({
+//         ...userWithoutPassword,
+//         token,
+//       });
+//     }
+//     return res
+//       .status(400)
+//       .json({ message: "userName or password is incorrect" });
+//   } catch (error) {
+//     return res.status(500).json({ message: error.message });
+//   }
+// };
+
+
 const login = async (req, res) => {
   try {
-    const allUser = await prisma.user.findMany();
-    const user = allUser.find(
-      (u) =>
-        u.userName === req.body.userName &&
-        bcrypt.compareSync(req.body.password, u.password)
-    );
-    // get permission from user roles
-    const permissions = await prisma.role.findUnique({
+    const user = await prisma.user.findUnique({
       where: {
-        id: user.roleId,
-      },
-      include: {
-        rolePermission: {
-          include: {
-            permission: true,
-          },
-        },
+        userName: req.body.userName,
       },
     });
-    // store all permissions name to an array
-    const permissionNames = permissions.rolePermission.map(
-      (rp) => rp.permission.name
+
+    if (!user || !bcrypt.compareSync(req.body.password, user.password)) {
+      return res.status(400).json({ message: "Username or password is incorrect" });
+    }
+
+    // Assuming you have roles and permissions set up
+    const permissions = []; // You can fetch and populate permissions here
+
+    const token = jwt.sign(
+      { sub: user.id, permissions: permissions },
+      'your_secret_key', // Replace with your actual secret key
+      {
+        expiresIn: '24h',
+      }
     );
 
-    if (user) {
-      const token = jwt.sign(
-        { sub: user.id, permissions: permissionNames },
-        secret,
-        {
-          expiresIn: "24h",
-        }
-      );
-      const { password, ...userWithoutPassword } = user;
-      return res.status(200).json({
-        ...userWithoutPassword,
-        token,
-      });
-    }
-    return res
-      .status(400)
-      .json({ message: "userName or password is incorrect" });
+    const { password, ...userWithoutPassword } = user;
+
+    return res.status(200).json({
+      ...userWithoutPassword,
+      token,
+    });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
 };
+
+
+// const register = async (req, res) => {
+//   try {
+//     const join_date = new Date(req.body.joinDate);
+//     const leave_date = new Date(req.body.leaveDate);
+
+//     const hash = await bcrypt.hash(req.body.password, saltRounds);
+//     const createUser = await prisma.user.create({
+//       data: {
+//         firstName: req.body.firstName,
+//         lastName: req.body.lastName,
+//         userName: req.body.userName,
+//         password: hash,
+//         email: req.body.email,
+//         phone: req.body.phone,
+//         street: req.body.street,
+//         city: req.body.city,
+//         state: req.body.state,
+//         zipCode: req.body.zipCode,
+//         country: req.body.country,
+//         joinDate: join_date,
+//         leaveDate: leave_date,
+//         employeeId: req.body.employeeId,
+//         bloodGroup: req.body.bloodGroup,
+//         image: req.body.image,
+//         employmentStatusId: req.body.employmentStatusId,
+//         departmentId: req.body.departmentId,
+//         roleId: req.body.roleId,
+//         shiftId: req.body.shiftId,
+//         leavePolicyId: req.body.leavePolicyId,
+//         weeklyHolidayId: req.body.weeklyHolidayId,
+//         designationHistory: {
+//           create: {
+//             designationId: req.body.designationId,
+//             startDate: new Date(req.body.designationStartDate),
+//             endDate: new Date(req.body.designationEndDate),
+//             comment: req.body.designationComment,
+//           },
+//         },
+//         salaryHistory: {
+//           create: {
+//             salary: req.body.salary,
+//             startDate: new Date(req.body.salaryStartDate),
+//             endDate: new Date(req.body.salaryEndDate),
+//             comment: req.body.salaryComment,
+//           },
+//         },
+//         educations: {
+//           create: {
+//               degree: req.body.degree,
+//               institution: req.body.institution,
+//               fieldOfStudy: req.body.fieldOfStudy,
+//               result: req.body.result,
+//               startDate: new Date(req.body.studyStartDate),
+//               endDate: new Date(req.body.studyEndDate),
+//           },    
+//         },
+//       },
+//     });
+//     const { password, ...userWithoutPassword } = createUser;
+//     return res.status(201).json(userWithoutPassword);
+//   } catch (error) {
+//     return res.status(500).json({ message: error.message });
+//   }
+// };
 
 const register = async (req, res) => {
   try {
@@ -76,43 +177,6 @@ const register = async (req, res) => {
         country: req.body.country,
         joinDate: join_date,
         leaveDate: leave_date,
-        employeeId: req.body.employeeId,
-        bloodGroup: req.body.bloodGroup,
-        image: req.body.image,
-        employmentStatusId: req.body.employmentStatusId,
-        departmentId: req.body.departmentId,
-        roleId: req.body.roleId,
-        shiftId: req.body.shiftId,
-        leavePolicyId: req.body.leavePolicyId,
-        weeklyHolidayId: req.body.weeklyHolidayId,
-        designationHistory: {
-          create: {
-            designationId: req.body.designationId,
-            startDate: new Date(req.body.designationStartDate),
-            endDate: new Date(req.body.designationEndDate),
-            comment: req.body.designationComment,
-          },
-        },
-        salaryHistory: {
-          create: {
-            salary: req.body.salary,
-            startDate: new Date(req.body.salaryStartDate),
-            endDate: new Date(req.body.salaryEndDate),
-            comment: req.body.salaryComment,
-          },
-        },
-        educations: {
-          create: req.body.educations.map((e) => {
-            return {
-              degree: e.degree,
-              institution: e.institution,
-              fieldOfStudy: e.fieldOfStudy,
-              result: e.result,
-              startDate: new Date(e.studyStartDate),
-              endDate: new Date(e.studyEndDate),
-            };
-          }),
-        },
       },
     });
     const { password, ...userWithoutPassword } = createUser;
