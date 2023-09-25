@@ -90,7 +90,7 @@ const login = async (req, res) => {
   }
 };
 
-
+// old register api
 // const register = async (req, res) => {
 //   try {
 //     const join_date = new Date(req.body.joinDate);

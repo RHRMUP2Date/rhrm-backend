@@ -2,8 +2,8 @@
 node_modules/
 
 # Prisma generated files
-prisma/schema.prisma
-prisma/.env
+#prisma/schema.prisma
+#prisma/.env
 
 # Environment files
 .env
